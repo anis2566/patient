@@ -8,6 +8,7 @@ import { ThemeProvider } from "@/providers/theme-provider";
 import { QueryProvider } from "@/providers/query-provider";
 import { auth } from "@/auth";
 import { WebPushProvider } from "@/providers/web-push-provider";
+import { ModalProvider } from "@/providers/modal-providers";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -35,7 +36,7 @@ export default async function RootLayout({
             >
               {children}
               <Toaster />
-              {/* <ModalProvider /> */}
+              <ModalProvider />
             </ThemeProvider>
           </QueryProvider>
         </SessionProvider>

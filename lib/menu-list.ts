@@ -17,6 +17,8 @@ import {
   BookOpenCheck,
   FileText,
   Megaphone,
+  UserRound,
+  Layers2,
 } from "lucide-react";
 
 type Submenu = {
@@ -71,7 +73,53 @@ export function getMenuList(pathname: string): Group[] {
             {
               href: "/dashboard/patient",
               label: "List",
-              active: pathname.includes("/dashboard/patient"),
+              active: pathname === "/dashboard/patient/",
+              icon: List,
+            },
+          ],
+        },
+        {
+          href: "",
+          label: "Doctor",
+          active: pathname.includes("/dashboard/doctor"),
+          icon: UsersRound,
+          submenus: [
+            {
+              href: "/dashboard/doctor/new",
+              label: "New",
+              active: pathname === "/dashboard/doctor/new",
+              icon: PlusCircle,
+            },
+            {
+              href: "/dashboard/patient",
+              label: "List",
+              active: pathname === "/dashboard/doctor",
+              icon: List,
+            },
+          ],
+        },
+        {
+          href: "",
+          label: "Treatment",
+          active: pathname.includes("/dashboard/treatment"),
+          icon: Layers3,
+          submenus: [
+            {
+              href: "/dashboard/treatment/category",
+              label: "Category",
+              active: pathname === "/dashboard/treatment/category",
+              icon: Layers2,
+            },
+            {
+              href: "/dashboard/treatment/new",
+              label: "New",
+              active: pathname === "/dashboard/treatment/new",
+              icon: PlusCircle,
+            },
+            {
+              href: "/dashboard/treatment",
+              label: "List",
+              active: pathname === "/dashboard/treatment",
               icon: List,
             },
           ],

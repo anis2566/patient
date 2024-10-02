@@ -108,6 +108,91 @@ model Patient {
   emergencyContact String
   bloodGroup BloodGroup?
 
+  health PatientHealth?
+  medicalRecords MedicalRecord[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+
+model PatientHealth {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  bloodGroup BloodGroup
+  height     Int
+  weight     Int
+  allergies  String?
+  habits   String?
+  medicalHistory String?
+
+  patientId String @db.ObjectId @unique
+  patient   Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Doctor {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  email     String?
+  phone     String
+  address   String
+  imageUrl  String?
+
+  medicalRecords MedicalRecord[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+
+model MedicalRecord {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  complains     String
+  diagnosis String
+  vitalSigns String
+
+  treatmentId  String @db.ObjectId
+  treatment    Treatment @relation(fields: [treatmentId], references: [id], onDelete: Cascade)
+  doctorId  String @db.ObjectId
+  doctor    Doctor @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  patientId String @db.ObjectId
+  patient   Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([treatmentId])
+  @@index([doctorId])
+  @@index([patientId])
+}
+
+model Treatment {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  title      String
+  description String
+
+  categoryId  String @db.ObjectId
+  category    TreatmentCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  medicalRecords MedicalRecord[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([categoryId])
+}
+
+model TreatmentCategory {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  description String?
+
+  treatments Treatment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+

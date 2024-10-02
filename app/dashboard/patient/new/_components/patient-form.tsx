@@ -4,11 +4,12 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { BloodGroup, Gender } from "@prisma/client";
 import { format } from "date-fns";
-import { CalendarIcon, Loader2, Trash2 } from "lucide-react";
+import { CalendarIcon, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { toast } from "sonner";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
+
 import {
   Card,
   CardHeader,
@@ -45,6 +46,7 @@ import { cn } from "@/lib/utils";
 import { UploadButton } from "@/lib/uploadthing";
 import { PatientSchema, PatientSchemaType } from "../../schema";
 import { CREATE_PATIENT_ACTION } from "../action";
+import { LoadingButton } from "@/components/loading-button";
 
 export const PatientForm = () => {
   const router = useRouter();
@@ -91,7 +93,7 @@ export const PatientForm = () => {
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField
               control={form.control}
               name="name"
@@ -304,14 +306,13 @@ export const PatientForm = () => {
               )}
             />
 
-            <Button
+            <LoadingButton
+              isLoading={isPending}
+              title="Create"
+              loadingTitle="Creating..."
+              onClick={form.handleSubmit(onSubmit)}
               type="submit"
-              disabled={isPending}
-              className="flex items-center gap-x-3"
-            >
-              {isPending && <Loader2 className="h-4animate-spin w-4" />}
-              {isPending ? "Loading..." : "Create Patient"}
-            </Button>
+            />
           </form>
         </Form>
       </CardContent>
