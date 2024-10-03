@@ -19,6 +19,9 @@ import {
   Megaphone,
   UserRound,
   Layers2,
+  Pill,
+  SquareStack,
+  Ambulance,
 } from "lucide-react";
 
 type Submenu = {
@@ -121,6 +124,38 @@ export function getMenuList(pathname: string): Group[] {
               label: "List",
               active: pathname === "/dashboard/treatment",
               icon: List,
+            },
+          ],
+        },
+        {
+          href: "",
+          label: "Medicine",
+          active: pathname.includes("/dashboard/medicine"),
+          icon: Pill,
+          submenus: [
+            {
+              href: "/dashboard/medicine/new",
+              label: "New",
+              active: pathname === "/dashboard/medicine/new",
+              icon: PlusCircle,
+            },
+            {
+              href: "/dashboard/medicine",
+              label: "List",
+              active: pathname === "/dashboard/medicine",
+              icon: List,
+            },
+            {
+              href: "/dashboard/medicine/generic",
+              label: "Generic",
+              active: pathname === "/dashboard/medicine/generic",
+              icon: SquareStack,
+            },
+            {
+              href: "/dashboard/medicine/manufacturer",
+              label: "Manufacturer",
+              active: pathname === "/dashboard/medicine/manufacturer",
+              icon: Ambulance,
             },
           ],
         },

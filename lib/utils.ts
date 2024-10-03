@@ -23,3 +23,8 @@ export const calculateAge = (dob: Date) => {
   }
   return `${years} year${years !== 1 ? "s" : ""}`;
 };
+
+
+export function formatString(input: string) {
+  return input.replace(/([A-Z])/g, " $1").trim();
+}

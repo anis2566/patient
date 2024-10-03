@@ -12,66 +12,81 @@ import {
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 
 import { ContentLayout } from "../_components/content-layout";
-import { TreatmentList } from "./_components/treatment-list";
 import { db } from "@/lib/prisma";
+import { MedicineList } from "./_components/medicine-list";
 import { Header } from "./_components/header";
 import { CustomPagination } from "@/components/custom-pagination";
 
 export const metadata: Metadata = {
-    title: "HMS | Treatment",
+    title: "HMS | Medicine",
     description: "Hospital Management System",
 };
 
 interface Props {
     searchParams: {
         name?: string;
+        generic?: string;
+        manufacturer?: string;
         perPage?: string;
         page?: string;
-        sort?: string;
-    };
+        sort?: "asc" | "desc";
+    }
 }
 
-const Treatments = async ({ searchParams }: Props) => {
-    const { name, perPage = "5", page = "1", sort = "desc" } = searchParams;
+const Medicines = async ({ searchParams }: Props) => {
+    const { name, generic, manufacturer, perPage = "5", page = "1", sort = "desc" } = searchParams;
     const itemsPerPage = parseInt(perPage);
     const currentPage = parseInt(page);
     const orderBy = sort === "asc" ? "asc" : "desc";
 
-    const [treatments, totalTreatments] = await Promise.all([
-        db.treatment.findMany({
+    const [medicines, totalMedicines, generics, manufacturers] = await Promise.all([
+        await db.medicine.findMany({
             where: {
-                ...(name && {
-                    title: {
-                        contains: name,
-                        mode: "insensitive",
-                    },
+                ...(name && { name: { contains: name, mode: "insensitive" } }),
+                ...(generic && {
+                    generic: {
+                        name: generic
+                    }
                 }),
+                ...(manufacturer && {
+                    manufacturer: {
+                        name: manufacturer
+                    }
+                }),
+            },
+            include: {
+                generic: true,
+                manufacturer: true,
             },
             orderBy: {
                 createdAt: orderBy,
             },
-            include: {
-                category: true,
-            },
             skip: (currentPage - 1) * itemsPerPage,
             take: itemsPerPage,
         }),
-        db.treatment.count({
+        await db.medicine.count({
             where: {
-                ...(name && {
-                    title: {
-                        contains: name,
-                        mode: "insensitive",
-                    },
+                ...(name && { name: { contains: name, mode: "insensitive" } }),
+                ...(generic && {
+                    generic: {
+                        name: generic
+                    }
                 }),
-            },
+                ...(manufacturer && {
+                    manufacturer: {
+                        name: manufacturer
+                    }
+                }),
+            }
         }),
+        await db.medicineGeneric.findMany(),
+        await db.medicineManufacturer.findMany(),
     ]);
 
-    const totalPages = Math.ceil(totalTreatments / itemsPerPage);
+    const totalPages = Math.ceil(totalMedicines / itemsPerPage);
 
     return (
-        <ContentLayout title="Treatment">
+        <ContentLayout title="Medicine">
             <Breadcrumb>
                 <BreadcrumbList>
                     <BreadcrumbItem>
@@ -88,12 +103,12 @@ const Treatments = async ({ searchParams }: Props) => {
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Treatments</CardTitle>
-                    <CardDescription>Manage your treatments here</CardDescription>
+                    <CardTitle>Medicines</CardTitle>
+                    <CardDescription>Manage your medicines here</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    <Header />
-                    <TreatmentList treatments={treatments} />
+                    <Header generics={generics} manufacturers={manufacturers} />
+                    <MedicineList medicines={medicines} />
                     <CustomPagination totalPages={totalPages} />
                 </CardContent>
             </Card>
@@ -101,4 +116,4 @@ const Treatments = async ({ searchParams }: Props) => {
     )
 }
 
-export default Treatments
+export default Medicines
