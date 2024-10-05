@@ -26,7 +26,7 @@ export const MedicalRecordSchema = z.object({
   complains: requiredString,
   diagnosis: z.string().optional(),
   vitalSigns: z.string().optional(),
-  treatmentId: z.string().optional(),
+  treatments: z.array(z.string()).optional(),
   doctorId: requiredString,
   medicines: z
     .array(MedicalRecordMedicineSchema)

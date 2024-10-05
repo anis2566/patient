@@ -33,7 +33,7 @@ export const patientSidebarNavs: PatientSidebarNavs[] = [
     icon: FileText,
   },
   {
-    href: "/appointments",
+    href: "/appointment",
     label: "Appointments",
     icon: Calendar,
   },

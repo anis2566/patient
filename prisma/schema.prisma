@@ -51,6 +51,14 @@ enum MedicineFrequency {
   FiveTimesADay
 }
 
+enum AppointmentStatus {
+  Pending
+  Approved
+  Rejected
+  Cancelled
+  Completed
+}
+
 model User {
   id               String           @id @default(auto()) @map("_id") @db.ObjectId
   name             String?
@@ -127,6 +135,7 @@ model Patient {
 
   health PatientHealth?
   medicalRecords MedicalRecord[]
+  appointments Appointment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -158,6 +167,7 @@ model Doctor {
   imageUrl  String?
 
   medicalRecords MedicalRecord[]
+  appointments Appointment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -172,11 +182,12 @@ model MedicalRecord {
 
   doctorId  String @db.ObjectId
   doctor    Doctor @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
   patientId String @db.ObjectId
   patient   Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
 
   medicines MedicalRecordMedicine[]
-  treatments Treatment[]
+  treatments MedicalRecordTreatment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -192,8 +203,8 @@ model Treatment {
 
   categoryId  String @db.ObjectId
   category    TreatmentCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  medicalRecordId String? @db.ObjectId
-  medicalRecord MedicalRecord? @relation(fields: [medicalRecordId], references: [id])
+
+  medicalRecordTreatments MedicalRecordTreatment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -201,6 +212,21 @@ model Treatment {
   @@index([categoryId])
 }
 
+model MedicalRecordTreatment {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  
+  treatmentId String @db.ObjectId
+  treatment Treatment @relation(fields: [treatmentId], references: [id], onDelete: Cascade)
+
+  medicalRecordId String @db.ObjectId
+  medicalRecord MedicalRecord @relation(fields: [medicalRecordId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([medicalRecordId])
+  @@index([treatmentId])
+}
 
 model MedicalRecordMedicine {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
@@ -211,6 +237,7 @@ model MedicalRecordMedicine {
 
   medicineId String @db.ObjectId
   medicine   Medicine @relation(fields: [medicineId], references: [id], onDelete: Cascade)
+
   medicalRecordId String @db.ObjectId
   medicalRecord MedicalRecord @relation(fields: [medicalRecordId], references: [id], onDelete: Cascade)
 
@@ -220,7 +247,6 @@ model MedicalRecordMedicine {
   @@index([medicalRecordId])
   @@index([medicineId])
 }
-
 
 model TreatmentCategory {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
@@ -233,7 +259,6 @@ model TreatmentCategory {
   updatedAt DateTime @updatedAt
 }
 
-
 model Medicine {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   name      String
@@ -243,6 +268,7 @@ model Medicine {
 
   genericId String? @db.ObjectId
   generic   MedicineGeneric? @relation(fields: [genericId], references: [id])
+
   manufacturerId String? @db.ObjectId
   manufacturer   MedicineManufacturer? @relation(fields: [manufacturerId], references: [id])
 
@@ -251,7 +277,6 @@ model Medicine {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
-
 
 model MedicineGeneric {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
@@ -264,7 +289,6 @@ model MedicineGeneric {
   updatedAt DateTime @updatedAt
 }
 
-
 model MedicineManufacturer {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   name      String
@@ -275,4 +299,26 @@ model MedicineManufacturer {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+
+model Appointment {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  purpose   String
+  date      DateTime
+  startTime DateTime
+  endTime   DateTime
+  status    AppointmentStatus @default(Pending)
+
+  patientId String @db.ObjectId
+  patient   Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  doctorId  String @db.ObjectId
+  doctor    Doctor @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([patientId])
+  @@index([doctorId])
 }

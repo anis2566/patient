@@ -3,33 +3,29 @@
 import { z } from "zod";
 import { useFieldArray, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useState } from "react";
+import { MedicineFrequency, MedicineInstruction } from "@prisma/client";
+import { useMutation, useQueries } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-
-import { GET_DOCTOR_FOR_SELECT, GET_MEDICINE_FOR_SELECT, GET_TREATMENT_FOR_SELECT } from "./action";
-import { useQueries, useQuery } from "@tanstack/react-query";
-import { MedicalRecordSchema } from "../schema";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { CheckIcon, Loader2, Trash } from "lucide-react";
-import { useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MedicineFrequency, MedicineInstruction } from "@prisma/client";
-import { formatString } from "@/lib/utils";
-import { MedicineForm } from "@/app/dashboard/medicine/new/_components/medicine-form";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
+import { CREATE_MEDICAL_RECORD_ACTION, GET_DOCTOR_FOR_SELECT, GET_MEDICINE_FOR_SELECT, GET_TREATMENT_FOR_SELECT } from "./action";
+import { MedicalRecordSchema } from "../schema";
+import { formatString } from "@/lib/utils";
+import { LoadingButton } from "@/components/loading-button";
+import { Trash } from "lucide-react";
+import { MultiSelect } from "@/components/ui/multi-select";
 
-type Doctor = {
-    id: string;
-    name: string;
-    imageUrl: string | null;
-}
 
 type MedicineRecord = {
     medicineId: string;
@@ -39,11 +35,14 @@ type MedicineRecord = {
     frequency: MedicineFrequency;
 }
 
-const AddMedicalRecord = () => {
+interface Props {
+    params: {
+        id: string;
+    }
+}
+
+const AddMedicalRecord = ({ params: { id } }: Props) => {
     const [open, setOpen] = useState(false);
-    const [openTreatment, setOpenTreatment] = useState(false);
-    const [search, setSearch] = useState("");
-    const [searchTreatment, setSearchTreatment] = useState("");
     const [newMedicine, setNewMedicine] = useState<MedicineRecord>({
         medicineId: "",
         medicineName: "",
@@ -53,20 +52,21 @@ const AddMedicalRecord = () => {
     });
     const [selectedMedicines, setSelectedMedicines] = useState<MedicineRecord[]>([]);
 
-    // Use useQueries to fetch both doctors and treatments
+    const router = useRouter();
+
     const results = useQueries({
         queries: [
             {
                 queryKey: ["doctors-for-medical-record-add"],
                 queryFn: async () => {
-                    const res = await GET_DOCTOR_FOR_SELECT(search);
+                    const res = await GET_DOCTOR_FOR_SELECT();
                     return res;
                 },
             },
             {
-                queryKey: ["treatments-for-medical-record-add", searchTreatment],
+                queryKey: ["treatments-for-medical-record-add"],
                 queryFn: async () => {
-                    const res = await GET_TREATMENT_FOR_SELECT(searchTreatment);
+                    const res = await GET_TREATMENT_FOR_SELECT();
                     return res;
                 },
             },
@@ -83,25 +83,38 @@ const AddMedicalRecord = () => {
     const doctors = results[0].data;
     const treatments = results[1].data;
     const medicines = results[2].data;
+
+    const { mutate: createMedicalRecord, isPending } = useMutation({
+        mutationFn: CREATE_MEDICAL_RECORD_ACTION,
+        onSuccess: (data) => {
+            if (data?.error) {
+                toast.error(data.error);
+            } else {
+                toast.success(data.success);
+                router.push(`/dashboard/patient/${id}/medical-record`);
+            }
+        },
+    })
+
     const form = useForm<z.infer<typeof MedicalRecordSchema>>({
         resolver: zodResolver(MedicalRecordSchema),
         defaultValues: {
             complains: "",
             diagnosis: "",
             vitalSigns: "",
-            treatmentId: "",
+            treatments: [],
             doctorId: "",
             medicines: [],
         },
     });
 
-    const { fields, append, remove } = useFieldArray({
+    const { append, remove } = useFieldArray({
         control: form.control,
         name: "medicines"
     });
 
     const onSubmit = (data: z.infer<typeof MedicalRecordSchema>) => {
-        console.log(data);
+        createMedicalRecord({ values: data, patientId: id });
     };
 
     const handleNewMedicineChange = (field: keyof MedicineRecord, value: string) => {
@@ -127,9 +140,6 @@ const AddMedicalRecord = () => {
         setSelectedMedicines(prev => prev.filter(medicine => medicine.medicineId !== id));
     };
 
-    console.log(form.getValues("medicines"));
-    console.log(selectedMedicines);
-
     return (
         <Card>
             <CardHeader>
@@ -145,7 +155,7 @@ const AddMedicalRecord = () => {
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Doctor</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isPending}>
                                         <FormControl>
                                             <SelectTrigger>
                                                 <SelectValue placeholder="Select a doctor" />
@@ -168,7 +178,7 @@ const AddMedicalRecord = () => {
                                 <FormItem>
                                     <FormLabel>Complains</FormLabel>
                                     <FormControl>
-                                        <Textarea {...field} />
+                                        <Textarea {...field} disabled={isPending} placeholder="Strock, Cough, etc" />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -181,7 +191,7 @@ const AddMedicalRecord = () => {
                                 <FormItem>
                                     <FormLabel>Diagnosis</FormLabel>
                                     <FormControl>
-                                        <Textarea {...field} />
+                                        <Textarea {...field} disabled={isPending} placeholder="High blood pressure, Diabetes, etc" />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -194,7 +204,7 @@ const AddMedicalRecord = () => {
                                 <FormItem>
                                     <FormLabel>Vital Signs</FormLabel>
                                     <FormControl>
-                                        <Textarea {...field} />
+                                        <Textarea {...field} disabled={isPending} placeholder="Temperature, Pulse, etc" />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -202,22 +212,22 @@ const AddMedicalRecord = () => {
                         />
                         <FormField
                             control={form.control}
-                            name="treatmentId"
+                            name="treatments"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Treatment</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                        <FormControl>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Select a treatment" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {treatments?.map((treatment) => (
-                                                <SelectItem key={treatment.id} value={treatment.id}>{treatment.title}</SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                    <FormLabel>Treatments</FormLabel>
+                                    <FormControl>
+                                        <MultiSelect
+                                            options={treatments?.map(treatment => ({ label: treatment.title, value: treatment.id })) || []}
+                                            onValueChange={field.onChange}
+                                            defaultValue={field.value || []}
+                                            placeholder="Select options"
+                                            variant="inverted"
+                                            animation={2}
+                                            maxCount={3}
+                                            disabled={isPending}
+                                        />
+                                    </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -230,7 +240,7 @@ const AddMedicalRecord = () => {
                             <CardContent className="space-y-2">
                                 <Dialog open={open} onOpenChange={setOpen}>
                                     <DialogTrigger asChild>
-                                        <Button type="button" variant="outline" className="ml-auto flex">Add Medicine</Button>
+                                        <Button type="button" variant="outline" className="ml-auto flex" disabled={isPending}>Add Medicine</Button>
                                     </DialogTrigger>
                                     <DialogContent>
                                         <DialogHeader>
@@ -325,9 +335,18 @@ const AddMedicalRecord = () => {
                                         }
                                     </TableBody>
                                 </Table>
+
+                                {form.formState.errors.medicines && <FormMessage>{form.formState.errors.medicines.message}</FormMessage>}
                             </CardContent>
                         </Card>
-                        <Button type="submit">Submit</Button>
+
+                        <LoadingButton
+                            type="submit"
+                            isLoading={isPending}
+                            title="Submit"
+                            loadingTitle="Submitting..."
+                            onClick={form.handleSubmit(onSubmit)}
+                        />
                     </form>
                 </Form>
             </CardContent>

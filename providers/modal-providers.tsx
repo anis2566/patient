@@ -7,6 +7,8 @@ import { DeleteGenericModal } from "@/app/dashboard/medicine/generic/_components
 import { ManufactureModal } from "@/app/dashboard/medicine/manufacturer/_components/manufacture-modal"
 import { DeleteManufacturerModal } from "@/app/dashboard/medicine/manufacturer/_components/delete-modal"
 import { DeleteMedicineModal } from "@/app/dashboard/medicine/_components/delete-modal"
+import { DeleteMedicalRecordModal } from "@/app/dashboard/patient/[id]/medical-record/_components/delete-modal"
+
 export const ModalProvider = () => {
     return (
         <>
@@ -17,6 +19,7 @@ export const ModalProvider = () => {
             <ManufactureModal />
             <DeleteManufacturerModal />
             <DeleteMedicineModal />
+            <DeleteMedicalRecordModal />
         </>
     )
 }
